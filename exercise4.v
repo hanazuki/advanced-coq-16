@@ -187,25 +187,35 @@ Section Kosaraju.
       Qed.
 
       Lemma rconnect_subset (s1 s2 : {set T}) x y: {subset s1 <= s2} ->  x -[s2]-> y -> x -[s1]-> y.
-        move => /subsetP S /rconnectP [p H0] [H1 H2]; apply/rconnectP.
+        move => /subsetP S /rconnectP [p H0 [H1 H2]]; apply/rconnectP.
         exists p => //; split => //.
         exact: (disjoint_transr S).
       Qed.
 
       Lemma rconnect_setU s1 s2 x y: [disjoint [set z | x -[s1]-> z && z -[s1]-> y] & s2] -> x -[s1]-> y ->  x -[s2 :|: s1]-> y.
-        move => /pred0P H0 /rconnectP [p H1] [H2 /pred0P H3]; apply/rconnectP; subst.
+        move => H0 /rconnectP [p H1 [H2 H3]]; apply/rconnectP; subst.
         exists p => //; split => //.
         apply/pred0P => a /=; rewrite in_setU; apply/andP => [[H4 /orP H5]].
-        move: (H0) => /(_ a) /= /andP => H0'.
-        move: (H3) => /(_ a) /= /andP => H3'.
+        move: (H4) => /splitPr => /= H7.
+        inversion H7 as [p0 p1 H6]; symmetry in H6. (*** todo *)
         case: H5 => H5.
-        - apply: H0'; intuition.
+        - move: H0 => /pred0P /(_ a) /= /andP; apply; intuition.
           apply/setIdP.
           split; apply/rconnectP.
-          -- exists p => //.
-             give_up.
-          -- give_up.
-        - exact: H3'.
-      Admitted.
+          -- move: H6; rewrite -cat1s catA => ?; subst.
+             move: H1; rewrite (cat_path r x _ _) => /andP[H1 H2].
+             exists (p0 ++ [:: a]) => //=.
+             split.
+             --- by rewrite last_cat.
+             --- by move: H3; rewrite disjoint_cat => /andP[].
+          -- subst.
+             exists p1.
+             --- by move: H1; rewrite cat_path => /= /andP[_ /andP[]].
+             --- split.
+                 ---- by rewrite last_cat last_cons.
+                 ---- move: H3; rewrite disjoint_cat => /andP [_].
+                      by rewrite disjoint_cons => /andP; intuition.
+        - by move: H3 => /pred0P /(_ a) /= /andP; apply.
+      Qed.
 
     End Kosaraju.
