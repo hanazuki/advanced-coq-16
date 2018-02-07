@@ -288,7 +288,7 @@ Section Kosaraju.
       apply/andP; split; exact: (rconnect_trans s x).
     Qed.
 
-    Lemma requiv_subset s1 s2 x y: {subset s1 <= s2} -> x =[s2]= y -> x =[s1]= y.
+    Lemma requiv_subset {s1 s2} x y: {subset s1 <= s2} -> x =[s2]= y -> x =[s1]= y.
       move => H.
       rewrite /requiv => /andP[H0 H1].
       apply/andP; split.
@@ -383,8 +383,20 @@ Section Kosaraju.
       - by congr S; case: H.
     Qed.
 
-    (* Lemma before_can x  y s l: x \in l -> y \in l -> x =[s]= y -> before l C[x]_(s, l) y. *)
-    (* Qed. *)
+    Lemma find_leq_index {a: T -> bool} {x l}: a x -> find a l <= index x l.
+      move => H.
+      elim: l => //= y l IH.
+      case: ifP => [|/negP] H0; first by rewrite leq0n.
+      rewrite ifF; last by apply/eqP => ?; subst.
+      exact: IH.
+    Qed.
 
-    (* Lemma before_canW x s1 s2 l: x \in l -> {subset s1 <= s2} -> before l C[x]_(s1, l) C[x]_(s2, l). *)
-    (* Qed. *)
+    Lemma before_can x  y s l: x \in l -> y \in l -> x =[s]= y -> before l C[x]_(s, l) y.
+      move => Hx Hy.
+      rewrite /rcan /=.
+      set a := (requiv s x).
+      move => H.
+      rewrite /before index_find.
+      exact: find_leq_index.
+      by apply/hasP; exists y.
+    Qed.
