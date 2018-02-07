@@ -328,3 +328,63 @@ Section Kosaraju.
         exists x => //; exact: requiv_ref.
       - by rewrite nth_default // requiv_ref.
     Qed.
+
+    Definition before l x y  := index x l <= index y l.
+
+    Lemma before_filter_inv a x y l (l1 := [seq i <- l | a i]): x \in l1 -> y \in l1 -> before l1 x y -> before l x y.
+      rewrite /before {}/l1.
+      elim: l => /= [|z l IH]; first by rewrite in_nil.
+      case: ifP => [|/negP] Haz.
+      - rewrite !in_cons => /orP Hx /orP Hy.
+        case: ifP => /eqP /= H.
+        -- move => *; exact: leq0n.
+        -- rewrite ifF; last by apply/eqP.
+           case: ifP => //= /eqP H0 H1.
+           apply: IH => //.
+           --- by case: Hx => [/eqP ?|//]; subst.
+           --- by case: Hy => [/eqP ?|//]; subst.
+      - move => Hx Hy H.
+        case: ifP => /eqP H0.
+        -- exact: leq0n.
+        -- case: ifP => //= /eqP H1; last by exact: IH.
+           by subst; move: Hy; rewrite mem_filter => /andP [].
+    Qed.
+
+    Lemma before_filter x y l a (l1 := [seq i <- l | a i]): x \in l1 -> before l x y -> before l1 x y.
+      rewrite /before {}/l1.
+      elim: l => /= [|z l IH]; first by rewrite in_nil.
+      case: ifP => [|/negP] Haz.
+      - rewrite in_cons => /orP Hx.
+        case: ifP => /eqP /= H.
+        -- by move => _; subst; rewrite ifT.
+        -- case: ifP => //= /eqP H0 H1.
+           rewrite ifF; last by apply/eqP.
+           by apply: IH => //; case: Hx => [/eqP ?|//]; subst.
+      - move => Hx.
+        case: ifP => /eqP H0; case: ifP => //= /eqP H1.
+        -- by move => _; apply IH => //; subst.
+        -- by subst; move: Hx; rewrite mem_filter => /andP [].
+        -- exact: IH.
+    Qed.
+
+    Lemma leq_index_nth x l i: index (nth x l i) l <= i.
+      elim: l i => //= z l IH i.
+      case: ifP => /= /eqP; first by rewrite leq0n.
+      case: i => //= j H.
+      exact: IH.
+    Qed.
+
+    Lemma index_find x l a:  has a l -> index (nth x l (find a l)) l = find a l.
+      elim: l => //= z l IH /orP H.
+      case: ifP => /= /eqP.
+      - case: ifP => [|/negP] Haz //= Hz.
+        case: H; first by move => ?.
+        give_up.
+      - give_up.
+    Admitted.
+
+    (* Lemma before_can x  y s l: x \in l -> y \in l -> x =[s]= y -> before l C[x]_(s, l) y. *)
+    (* Qed. *)
+
+    (* Lemma before_canW x s1 s2 l: x \in l -> {subset s1 <= s2} -> before l C[x]_(s1, l) C[x]_(s2, l). *)
+    (* Qed. *)
