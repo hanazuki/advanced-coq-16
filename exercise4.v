@@ -186,7 +186,7 @@ Section Kosaraju.
           -- by rewrite disjoint_cat; apply/andP.
       Qed.
 
-      Lemma rconnect_subset (s1 s2 : {set T}) x y: {subset s1 <= s2} ->  x -[s2]-> y -> x -[s1]-> y.
+      Lemma rconnect_subset {s1 s2 : {set T}} x y: {subset s1 <= s2} ->  x -[s2]-> y -> x -[s1]-> y.
         move => /subsetP S /rconnectP [p H0 [H1 H2]]; apply/rconnectP.
         exists p => //; split => //.
         exact: (disjoint_transr S).
@@ -256,4 +256,35 @@ Section Kosaraju.
            rewrite disjoint_setU1r.
            apply/andP; split => //.
            by apply/negP; move: H4 => /negP.
+    Qed.
+
+    Definition requiv s x y := x -[s]-> y && y -[s]-> x.
+
+    Local Notation "x =[ s ]= y" := (requiv s x y) (at level 10, format "x  =[ s ]=  y").
+    Local Notation "x =[]= y" := (requiv set0 x y) (at level 10, format "x  =[]=  y").
+
+    Lemma requiv_set0: requiv set0 =2 (fun x y => connect r x y && connect r y x).
+      by move => x y; rewrite /requiv !rconnect_set0.
+    Qed.
+
+    Lemma requiv_ref s: reflexive (requiv s).
+      by move => x; rewrite /requiv !rconnect_ref.
+    Qed.
+
+    Lemma requiv_sym s: symmetric (requiv s).
+      by move => x y; rewrite /requiv andbC.
+    Qed.
+
+    Lemma requiv_trans s: transitive (requiv s).
+      move => x y z.
+      rewrite /requiv => /andP[H0 H1] /andP[H2 H3].
+      apply/andP; split; exact: (rconnect_trans s x).
+    Qed.
+
+    Lemma requiv_subset s1 s2 x y: {subset s1 <= s2} -> x =[s2]= y -> x =[s1]= y.
+      move => H.
+      rewrite /requiv => /andP[H0 H1].
+      apply/andP; split.
+        by have := rconnect_subset x y H; apply.
+        by have := rconnect_subset y x H; apply.
     Qed.
