@@ -192,7 +192,7 @@ Section Kosaraju.
         exact: (disjoint_transr S).
       Qed.
 
-      Lemma rconnect_setU s1 s2 x y: [disjoint [set z | x -[s1]-> z && z -[s1]-> y] & s2] -> x -[s1]-> y ->  x -[s2 :|: s1]-> y.
+      Lemma rconnect_setU {s1 s2 x y}: [disjoint [set z | x -[s1]-> z && z -[s1]-> y] & s2] -> x -[s1]-> y ->  x -[s2 :|: s1]-> y.
         move => H0 /rconnectP [p H1 [H2 H3]]; apply/rconnectP; subst.
         exists p => //; split => //.
         apply/pred0P => a /=; rewrite in_setU; apply/andP => [[H4 /orP H5]].
@@ -218,4 +218,42 @@ Section Kosaraju.
         - by move: H3 => /pred0P /(_ a) /= /andP; apply.
       Qed.
 
-    End Kosaraju.
+    Lemma rconnect_setU1r s x y z: ~~ z -[s]-> y ->  x -[s]-> y -> x -[z |: s]-> y.
+      move => /negP H0.
+      suff: [disjoint [set w | x -[s]->w && w-[s]-> y] & [set z] ] by exact: rconnect_setU.
+      rewrite disjoint_sym disjoint_set1.
+      by apply/negP => /setIdP [_ ?]; apply: H0.
+    Qed.
+
+    Lemma rconnect_setU1l s x y z: ~~ (x -[s]-> z) ->  x -[s]-> y -> x -[z |: s]-> y.
+      move => /negP H0.
+      suff: [disjoint [set w | x -[s]->w && w-[s]-> y] & [set z] ] by exact: rconnect_setU.
+      rewrite disjoint_sym disjoint_set1.
+      by apply/negP => /setIdP [? _]; apply: H0.
+    Qed.
+
+    Lemma rconnect_id_setU1 s x y : x -[x |: s]-> y = x -[s]-> y.
+      apply/rconnectP/rconnectP.
+      - move => [p H0 [H1]].
+        rewrite disjoint_setU1r => /andP.
+        exists p => //; split => //; intuition.
+      - move => [p].
+        move Hn: (size p) => n; move: Hn.
+        move: p.
+        elim/Wf_nat.lt_wf_ind: n => [n IH].
+        move => p /esym H0 [H1] [H2 H3]; subst.
+        case H4: (x \in p).
+        -- move: H4 => /splitPr H4.
+           inversion H4 as [p0 p1 H5]; symmetry in H5; subst.
+           apply: IH.
+           instantiate (1:=size p1).
+           by apply/ltP; rewrite size_cat /= ltn_addl.
+           by instantiate (1:=p1).
+           by move: H1; rewrite cat_path /= => /andP[_] /andP[].
+           split; first by rewrite last_cat last_cons.
+           by move: H3; rewrite disjoint_cat disjoint_cons => /andP[_] /andP[].
+        -- exists p => //; split => //.
+           rewrite disjoint_setU1r.
+           apply/andP; split => //.
+           by apply/negP; move: H4 => /negP.
+    Qed.
