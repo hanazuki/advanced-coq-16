@@ -232,6 +232,13 @@ Section Kosaraju.
       by apply/negP => /setIdP [? _]; apply: H0.
     Qed.
 
+    Lemma lt_wf_ind n (P: nat -> Prop): (forall n0, (forall m, m < n0 -> P m) -> P n0) -> P n.
+      move => IH.
+      apply: (Wf_nat.lt_wf_ind n P) => n0 H.
+      apply: IH => m /ltP H0.
+      exact: H.
+    Qed.
+
     Lemma rconnect_id_setU1 s x y : x -[x |: s]-> y = x -[s]-> y.
       apply/rconnectP/rconnectP.
       - move => [p H0 [H1]].
@@ -240,14 +247,14 @@ Section Kosaraju.
       - move => [p].
         move Hn: (size p) => n; move: Hn.
         move: p.
-        elim/Wf_nat.lt_wf_ind: n => [n IH].
+        elim/lt_wf_ind: n => [n IH].
         move => p /esym H0 [H1] [H2 H3]; subst.
         case H4: (x \in p).
         -- move: H4 => /splitPr H4.
            inversion H4 as [p0 p1 H5]; symmetry in H5; subst.
            apply: IH.
            instantiate (1:=size p1).
-           by apply/ltP; rewrite size_cat /= ltn_addl.
+           by rewrite size_cat /= ltn_addl.
            by instantiate (1:=p1).
            by move: H1; rewrite cat_path /= => /andP[_] /andP[].
            split; first by rewrite last_cat last_cons.
@@ -287,4 +294,37 @@ Section Kosaraju.
       apply/andP; split.
         by have := rconnect_subset x y H; apply.
         by have := rconnect_subset y x H; apply.
+    Qed.
+
+    Definition rcan x p := nth x p.2 (find (requiv p.1 x) p.2).
+
+    Notation "C[ x ]_ p" := (rcan x p) (at level 9, format "C[ x ]_ p").
+
+    Lemma mem_rcan x p : x \in p.2 -> C[x]_p \in p.2.
+      move: p => [p s] /= H.
+      rewrite /rcan /=.
+      set i := find (requiv p x) s.
+      case (ltnP i (size s)) => H0.
+      - exact: mem_nth.
+      - by rewrite nth_default.
+    Qed.
+
+    Lemma rcan_cons x y s l: C[x]_(s, y :: l) = if x =[s]= y then y else C[x]_(s,l).
+      by rewrite /rcan /=; case: ifP.
+    Qed.
+
+    Lemma rcan_cat x s l1 l2: x \in l1 -> C[x]_(s, l1 ++ l2) = C[x]_(s, l1).
+      move => H.
+      rewrite /rcan /= nth_cat ifT /= find_cat ifT // -?has_find; apply/hasP; exists x => //; exact: requiv_ref.
+    Qed.
+
+    Lemma requiv_can x s l : x \in l -> C[x]_(s, l) =[s]= x.
+      move => H.
+      rewrite /rcan /=.
+      set i := find (requiv s x) l.
+      case (ltnP i (size l)) => H0.
+      - rewrite requiv_sym.
+        apply: nth_find; apply/hasP.
+        exists x => //; exact: requiv_ref.
+      - by rewrite nth_default // requiv_ref.
     Qed.
