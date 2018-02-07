@@ -376,12 +376,12 @@ Section Kosaraju.
 
     Lemma index_find x l a:  has a l -> index (nth x l (find a l)) l = find a l.
       elim: l => //= z l IH /orP H.
-      case: ifP => /= /eqP.
-      - case: ifP => [|/negP] Haz //= Hz.
-        case: H; first by move => ?.
-        give_up.
-      - give_up.
-    Admitted.
+      case: ifP => /= /eqP; case: ifP => [|/negP] Haz //= Hz.
+      - subst; case: H => H; first by [].
+        case: Haz.
+        exact: nth_find.
+      - by congr S; case: H.
+    Qed.
 
     (* Lemma before_can x  y s l: x \in l -> y \in l -> x =[s]= y -> before l C[x]_(s, l) y. *)
     (* Qed. *)
